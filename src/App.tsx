@@ -200,24 +200,37 @@ function App() {
         <OrbitControls />
       </Canvas>
       <div className="controls">
-        <button
-          className="control-button"
-          onMouseDown={() => setIsMovingLeft(true)}
-          onMouseUp={() => setIsMovingLeft(false)}
-          onTouchStart={() => setIsMovingLeft(true)}
-          onTouchEnd={() => setIsMovingLeft(false)}
-        >
-          ←
-        </button>
-        <button
-          className="control-button"
-          onMouseDown={() => setIsMovingRight(true)}
-          onMouseUp={() => setIsMovingRight(false)}
-          onTouchStart={() => setIsMovingRight(true)}
-          onTouchEnd={() => setIsMovingRight(false)}
-        >
-          →
-        </button>
+      <button
+        className="control-button"
+        onMouseDown={() => setIsMovingLeft(true)}
+        onMouseUp={() => setIsMovingLeft(false)}
+        onTouchStart={(e) => {
+          e.preventDefault(); // 드래그 방지
+          setIsMovingLeft(true);
+        }}
+        onTouchEnd={(e) => {
+          e.preventDefault(); // 드래그 방지
+          setIsMovingLeft(false);
+        }}
+      >
+        ←
+      </button>
+
+      <button
+        className="control-button"
+        onMouseDown={() => setIsMovingRight(true)}
+        onMouseUp={() => setIsMovingRight(false)}
+        onTouchStart={(e) => {
+          e.preventDefault(); // 드래그 방지
+          setIsMovingRight(true);
+        }}
+        onTouchEnd={(e) => {
+          e.preventDefault(); // 드래그 방지
+          setIsMovingRight(false);
+        }}
+      >
+        →
+      </button>
       </div>
       {gameOver && <div className="game-over">Game Over!</div>}
     </div>
