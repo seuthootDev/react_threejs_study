@@ -37,10 +37,20 @@ function Player({ onGameOver, position, setPosition }: PlayerProps) {
         let [x, y, z] = prev;
         switch (event.key) {
           case 'ArrowLeft':
-            x = Math.min(x - 5, 400);
+            if (x <= -400){
+              x=x
+            }
+            else{
+              x = x - 5;
+            }
             break;
           case 'ArrowRight':
-            x = Math.max(x + 5, -400);
+            if (x >= 400){
+              x=x
+            }
+            else{
+              x = x + 5;
+            }
             break;
           default:
             return prev;
