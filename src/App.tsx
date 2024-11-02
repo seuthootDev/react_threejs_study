@@ -118,6 +118,8 @@ function Road() {
 function App() {
   const [gameOver, setGameOver] = useState(false);
   const [position, setPosition] = useState<[number, number, number]>([0, 90, 300]);
+  const [isMovingLeft, setIsMovingLeft] = useState(false);
+  const [isMovingRight, setIsMovingRight] = useState(false);
 
   // 장애물 위치를 관리하는 상태
   const [obstacles, setObstacles] = useState<Array<[number, number, number]>>(
@@ -148,6 +150,22 @@ function App() {
     });
   };
 
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setPosition((prev) => {
+        let [x, y, z] = prev;
+        if (isMovingLeft) {
+          x = Math.min(x - 5, 400);
+        } else if (isMovingRight) {
+          x = Math.max(x + 5, -400);
+        }
+        return [x, y, z];
+      });
+    }, 100); // 100ms마다 위치 업데이트
+
+    return () => clearInterval(interval); // 클린업
+  }, [isMovingLeft, isMovingRight]);
+
   return (
     <div className="App">
       <header className="App-header">
@@ -172,20 +190,24 @@ function App() {
         <OrbitControls />
       </Canvas>
       <div className="controls">
-        <button className="control-button" onClick={() => {
-          setPosition((prev) => {
-            let [x, y, z] = prev;
-            x = Math.min(x - 5, 400);
-            return [x, y, z];
-          });
-        }}>←</button>
-        <button className="control-button" onClick={() => {
-          setPosition((prev) => {
-            let [x, y, z] = prev;
-            x = Math.max(x + 5, -400);
-            return [x, y, z];
-          });
-        }}>→</button>
+        <button
+          className="control-button"
+          onMouseDown={() => setIsMovingLeft(true)}
+          onMouseUp={() => setIsMovingLeft(false)}
+          onTouchStart={() => setIsMovingLeft(true)}
+          onTouchEnd={() => setIsMovingLeft(false)}
+        >
+          ←
+        </button>
+        <button
+          className="control-button"
+          onMouseDown={() => setIsMovingRight(true)}
+          onMouseUp={() => setIsMovingRight(false)}
+          onTouchStart={() => setIsMovingRight(true)}
+          onTouchEnd={() => setIsMovingRight(false)}
+        >
+          →
+        </button>
       </div>
       {gameOver && <div className="game-over">Game Over!</div>}
     </div>
