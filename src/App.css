@@ -36,3 +36,19 @@
     transform: rotate(360deg);
   }
 } */
+
+
+.App {
+  width: 100vw; /* 전체 화면 너비 */
+  height: 100vh; /* 전체 화면 높이 */
+  overflow: hidden; /* 스크롤 제거 */
+}
+
+.Canvas-container {
+  width: 100%;
+  height: 100%;
+}
+
+canvas {
+  display: block; /* 기본적으로 여백 제거 */
+}
