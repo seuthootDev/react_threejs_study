@@ -4,22 +4,20 @@ import { Canvas, useFrame } from '@react-three/fiber';
 import { OrbitControls, useGLTF } from '@react-three/drei';
 import { AnimationMixer, TextureLoader, PlaneGeometry, MeshStandardMaterial, Mesh } from 'three';
 
-// GLTF 모델을 불러오는 컴포넌트
 interface PlayerProps {
-  onGameOver: () => void; // onGameOver prop의 타입 정의
+  onGameOver: () => void;
+  position: [number, number, number];
+  setPosition: React.Dispatch<React.SetStateAction<[number, number, number]>>;
 }
 
-function Player({ onGameOver }: PlayerProps) {
-  const { scene, animations } = useGLTF('/models/player/cac.gltf'); // GLTF 파일 경로
+function Player({ onGameOver, position, setPosition }: PlayerProps) {
+  const { scene, animations } = useGLTF('/models/player/cac.gltf');
   const mixer = useRef<AnimationMixer | null>(null);
-  const [position, setPosition] = useState([0, 90, 300]);
 
   useEffect(() => {
     mixer.current = new AnimationMixer(scene);
-    
-    // 애니메이션 클립을 믹서에 추가하고 재생
     animations.forEach((clip) => {
-      if (mixer.current) { 
+      if (mixer.current) {
         mixer.current.clipAction(clip).play();
       }
     });
@@ -30,7 +28,7 @@ function Player({ onGameOver }: PlayerProps) {
   }, [animations, scene]);
 
   useFrame((state, delta) => {
-    if (mixer.current) mixer.current.update(delta); // 애니메이션 업데이트
+    if (mixer.current) mixer.current.update(delta);
   });
 
   useEffect(() => {
@@ -53,46 +51,49 @@ function Player({ onGameOver }: PlayerProps) {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
+  }, [setPosition]);
 
-  return <primitive object={scene} position={position} rotation={[0, Math.PI, 0]} />;
+  return (
+    <>
+      <primitive object={scene} position={position} rotation={[0, Math.PI, 0]} />
+    </>
+  );
 }
 
-// 장애물 컴포넌트
-function Obstacle({ position }: { position: [number, number, number] }) {
-  const geometry = new PlaneGeometry(50, 50); // 장애물 크기
-  const material = new MeshStandardMaterial({ color: 'blue' });
-  const meshRef = useRef<Mesh | null>(null); // 단일 메쉬 참조
+interface ObstacleProps {
+  position: [number, number, number];
+  resetObstacle: () => void;
+}
 
-  // 장애물이 매 프레임마다 뒤로 이동하도록 설정
+function Obstacle({ position, resetObstacle }: ObstacleProps) {
+  const geometry = new PlaneGeometry(50, 50);
+  const material = new MeshStandardMaterial({ color: 'blue' });
+  const meshRef = useRef<Mesh | null>(null);
+
   useFrame(() => {
     if (meshRef.current) {
-      meshRef.current.position.z += 5; // 장애물 뒤로 이동
+      meshRef.current.position.z += 5;
       if (meshRef.current.position.z >= 400) {
-        meshRef.current.position.y = Math.random() * 90 +30
-        meshRef.current.position.z = Math.random() * -500 - 500;
-        meshRef.current.position.x = Math.random() * 800 - 400; // 랜덤 X 위치 설정
+        resetObstacle(); // 장애물 위치를 초기화하는 함수 호출
       }
     }
-    
   });
 
   return <mesh ref={meshRef} geometry={geometry} material={material} position={position} />;
 }
 
-// 이미지로 길을 만드는 컴포넌트
 function Road() {
-  const roadTexture = new TextureLoader().load('/models/objects/path.jpg'); // 이미지 경로
+  const roadTexture = new TextureLoader().load('/models/objects/path.jpg');
   const geometry = new PlaneGeometry(1000, 1000);
   const material = new MeshStandardMaterial({ map: roadTexture });
   const meshRefs = useRef<Array<Mesh | null>>(Array(3).fill(null));
 
   useFrame(() => {
-    meshRefs.current.forEach((mesh, index) => {
+    meshRefs.current.forEach((mesh) => {
       if (mesh) {
-        mesh.position.z += 5; // 길을 뒤로 이동
+        mesh.position.z += 5;
         if (mesh.position.z >= 1000) {
-          mesh.position.z = -1000; // 다시 앞으로 위치시키기
+          mesh.position.z = -1000;
         }
       }
     });
@@ -116,21 +117,36 @@ function Road() {
 
 function App() {
   const [gameOver, setGameOver] = useState(false);
+  const [position, setPosition] = useState<[number, number, number]>([0, 90, 300]);
+
+  // 장애물 위치를 관리하는 상태
+  const [obstacles, setObstacles] = useState<Array<[number, number, number]>>(
+    Array.from({ length: 20 }, () => [
+      Math.random() * 800 - 400,
+      Math.random() * 90 + 30,
+      Math.random() * -500 - 1000,
+    ])
+  );
 
   const handleGameOver = () => {
     setGameOver(true);
-    alert('Game Over!'); // 게임 오버 메시지
+    alert('Game Over!');
     setTimeout(() => {
       setGameOver(false);
-    }, 2000); // 2초 후 초기화
+    }, 2000);
   };
 
-  // 장애물 생성
-  const obstacles: [number, number, number][] = Array.from({ length: 20 }, () => [
-    Math.random() * 800 - 400, // -400에서 400 사이의 랜덤 X 위치
-    Math.random() * 90 +30 ,                        // Y는 고정
-    Math.random() * -500 - 1000 // 500에서 1000 사이의 랜덤 Z 위치
-  ]);
+  const resetObstacle = (index: number) => {
+    setObstacles((prev) => {
+      const newObstacles = [...prev];
+      newObstacles[index] = [
+        Math.random() * 800 - 400,
+        Math.random() * 90 + 30,
+        Math.random() * -500 - 1000,
+      ];
+      return newObstacles;
+    });
+  };
 
   return (
     <div className="App">
@@ -144,13 +160,33 @@ function App() {
       >
         <ambientLight intensity={0.5} />
         <directionalLight position={[-1, 1, 1]} intensity={0.5} />
-        <Player onGameOver={handleGameOver} />
+        <Player onGameOver={handleGameOver} position={position} setPosition={setPosition} />
         <Road />
-        {obstacles.map((position, index) => (
-          <Obstacle key={index} position={position} />
+        {obstacles.map((obstaclePosition, index) => (
+          <Obstacle
+            key={index}
+            position={obstaclePosition}
+            resetObstacle={() => resetObstacle(index)} // 장애물 초기화 함수 전달
+          />
         ))}
         <OrbitControls />
       </Canvas>
+      <div className="controls">
+        <button className="control-button" onClick={() => {
+          setPosition((prev) => {
+            let [x, y, z] = prev;
+            x = Math.min(x - 5, 400);
+            return [x, y, z];
+          });
+        }}>←</button>
+        <button className="control-button" onClick={() => {
+          setPosition((prev) => {
+            let [x, y, z] = prev;
+            x = Math.max(x + 5, -400);
+            return [x, y, z];
+          });
+        }}>→</button>
+      </div>
       {gameOver && <div className="game-over">Game Over!</div>}
     </div>
   );
